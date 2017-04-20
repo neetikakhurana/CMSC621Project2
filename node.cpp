@@ -78,6 +78,7 @@ int main(int argc, char *argv[])
 	if(n<0){
 		fprintf(stderr, "Error reading clock time from daemon\n");
 	}
+	printf("%d : Received diff %d\n", pid, *(int *)buffer);
 	data = data+*(int *)buffer;
 	printf("%d : Sync Logical Clock : %d\n",pid,data);  	
 	

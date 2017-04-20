@@ -86,10 +86,12 @@ int main(int argc, char *argv[])
 	for (j = 0;j < MAXPROCESS;j++){
 		bzero(buffer,MAXDATASIZE);
 		*(int *)buffer=average-clock_times[j];
+		printf("Writing on sock %d %d\n", newsockfd[j],*(int*)buffer);
 		n = write(newsockfd[j], buffer, strlen(buffer));
-		if(n < 0)
+		if(n < 0){
 			fprintf(stderr, "Error writing synced clock to clients\n");
 			exit(1);
+		}
 	}
 	
 	for(j = 0;j < MAXPROCESS; j++)
