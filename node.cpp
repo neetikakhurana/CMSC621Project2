@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
 	*(int *)buffer = data;
 	printf("%d : Initial clock of client: %d\n",pid, data);
 
-	int n=read(socketfd,buffer,strlen(buffer));
+	int n=read(socketfd,buffer,MAXDATASIZE);
 	if(n<0){
 		fprintf(stderr, "Error reading daemon's initial clock\n");
 		exit(1);
@@ -66,19 +66,19 @@ int main(int argc, char *argv[])
 	printf("%d : Sending clock difference %d to daemon\n",pid,diff);
 	bzero(buffer,MAXDATASIZE);
 	*(int *)buffer=diff;
-	n = write(socketfd, buffer, strlen(buffer));
+	n = write(socketfd, buffer, MAXDATASIZE);
 	if(n < 0)
 	{
 		fprintf(stderr, "%d : Error writing clock diff to daemon\n",pid);
 		exit(1);	
 	}
 
-	bzero(buffer, MAXDATASIZE);
+	//bzero(buffer, MAXDATASIZE);
 	n = read(socketfd, buffer, MAXDATASIZE);
 	if(n<0){
 		fprintf(stderr, "Error reading clock time from daemon\n");
 	}
-	printf("%d : Received diff %d\n", pid, *(int *)buffer);
+	printf("%d : Received diff %d\n", pid, *(int*)buffer);
 	data = data+*(int *)buffer;
 	printf("%d : Sync Logical Clock : %d\n",pid,data);  	
 	

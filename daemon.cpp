@@ -71,7 +71,6 @@ int main(int argc, char *argv[])
 		printf("Diff received %d\n",*(int *)buffer);
 		clock_times[i] = *(int *)buffer;
 		i++;
-
 	}
 
 	for(j = 0;j < MAXPROCESS;j++){
@@ -81,21 +80,23 @@ int main(int argc, char *argv[])
 	printf("average calculated %d\n",average);
 	initial_clock=initial_clock+average;
 	printf("Daemon's new clock %d\n",initial_clock);
-
-	*(int *)buffer = average;
+	char x[10];
+	bzero(buffer,MAXDATASIZE);
 	for (j = 0;j < MAXPROCESS;j++){
 		bzero(buffer,MAXDATASIZE);
 		*(int *)buffer=average-clock_times[j];
-		printf("Writing on sock %d %d\n", newsockfd[j],*(int*)buffer);
-		n = write(newsockfd[j], buffer, strlen(buffer));
+		printf("Writing %d\n", *(int*)buffer);
+		int n = write(newsockfd[j], buffer, MAXDATASIZE);
 		if(n < 0){
 			fprintf(stderr, "Error writing synced clock to clients\n");
+			close(newsockfd[j]);
 			exit(1);
 		}
 	}
 	
 	for(j = 0;j < MAXPROCESS; j++)
 		close(newsockfd[j]);
+	
 	close(socketfd);
 
 	return 0;
