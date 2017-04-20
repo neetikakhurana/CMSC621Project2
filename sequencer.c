@@ -82,7 +82,7 @@ int main(int argc, char *argv[])
 					exit(0);
 				}
 				else{
-					printf("WE DID IT %s",rec[j].str);
+					printf("WE DID IT %s\n",rec[j].str);
 				}	
 			
 		}			
