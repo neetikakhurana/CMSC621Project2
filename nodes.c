@@ -11,12 +11,14 @@
 #include <unistd.h>
 
 #define MAXDATASIZE 256
-
+int S=0;
 char str[19];
 char ip_addr[25];
+int port=9000;
 void *sendRequests(void * socketfd);
 void *listenRequests(void * socketfd);
 int pid;
+int nprocess;
 int main(int argc, char *argv[]){
 	struct sockaddr_in server_addr;
     struct hostent *server;
@@ -26,12 +28,13 @@ int main(int argc, char *argv[]){
 	int *new_sock;
 	u_int yes=1;
 
-	if(argc<3){
-		fprintf(stderr, "Usage client <hostname> <process>\n");
+	if(argc<4){
+		fprintf(stderr, "Usage client <hostname> <process> <no of processes>\n");
 		exit(1);
 	}
 	pid=atoi(argv[2]);
-	portno = 8880;
+	nprocess=atoi(argv[3]);
+	portno = 8888;
 	server = gethostbyname(argv[1]);
 
 	if(server == NULL)
@@ -80,30 +83,69 @@ int main(int argc, char *argv[]){
 	exit(0);
 }
 
+
+//thread to send the messages to the sequencer as well as multicast the message to other processes
 void *sendRequests(void * socketfd){
 	printf("%d : In sender thread\n",pid);
 	char buffer[256];
 	int newsocket = *(int *)socketfd;
 	bzero(buffer, MAXDATASIZE);	
 	strcpy(buffer, "Hello");
+	sprintf(buffer,"%s %d",buffer,pid);
+	printf("Sending to sequencer %s\n", buffer);
 	int n = write(newsocket, buffer, MAXDATASIZE);
 	if(n < 0)
 		fprintf(stderr, "Error writing to socket\n");
 	else{
 		printf("%d : Write successful to sequencer\n",pid);
+		/*for(int i=0;i<nprocess;i++){
+
+		}*/
 	}
 }
 
+
+//thread to receive the message from the sequencer as well as other processes
 void *listenRequests(void * socketfd){
 	printf("%d : In receiver thread\n",pid);
 	struct hostent *server;
+	int newsock[nprocess];
 	int portno,data,n;
 	int newsocket = *(int *)socketfd;
 	char buffer[256];
+	int i=0,j=1;
 	bzero(buffer, 256);
-	while(read(newsocket, buffer, 256)){
-		printf("%d : Data received : %s\n",pid,buffer);
-		bzero(buffer, 256);	
+
+	int socketfd = socket(AF_INET,SOCK_STREAM, 0);
+	if(socketfd < 0)
+		fprintf(stderr, "Error creating a socket\n");
+	bzero((char *)&serveradd, sizeof(serveradd)); // zero out the buffer
+	portno = port+pid;
+	serveradd.sin_family = AF_INET;
+	serveradd.sin_addr.s_addr = INADDR_ANY; //address ethernet
+	serveradd.sin_port = htons(portno); // takes port no and convert into network
+	
+	if(bind(socketfd, (struct sockaddr *)&serveradd, sizeof(serveradd)) < 0)
+	{
+		fprintf(stderr, "Error binding socket\n");
+		exit(1);
 	}
+
+	listen(socketfd, 100);
+
+
+
+	while(read(newsocket, buffer, 256) && j<nprocess){
+		printf("%d : Data received : %s\n",pid,buffer);
+		bzero(buffer, 256);
+		j++;	
+	}
+	if(j==nprocess){
+		printf("Closing..........................\n");
+		close(newsocket);
+	}
+	while(i < nprocess){
+		newsock[i] = accept(socketfd, (struct sockaddr *)&clientaddr, &clientlen);
+
 	
 }

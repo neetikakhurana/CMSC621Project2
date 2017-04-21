@@ -16,14 +16,15 @@
 typedef struct {
 	int fid;
 	char str[35];
+	int pid;
+	int S;
 }record;
 
 int socketfd, newsockfd, portno, *new_sock;
 struct sockaddr_in serveradd, clientaddr;
 pthread_mutex_t lock; 
 char buffer[MAXDATASIZE]; 
-int k,reccount = 0,i = 0,j=0;
-
+int k,reccount = 0,i = 0,j=0,S=0;
 
 int main(int argc, char *argv[])
 {
@@ -32,7 +33,7 @@ int main(int argc, char *argv[])
 	if(socketfd < 0)
 		fprintf(stderr, "Error creating a socket\n");
 	bzero((char *)&serveradd, sizeof(serveradd)); // zero out the buffer
-	portno = 8880;
+	portno = 8888;
 	serveradd.sin_family = AF_INET;
 	serveradd.sin_addr.s_addr = INADDR_ANY; //address ethernet
 	serveradd.sin_port = htons(portno); // takes port no and convert into network
@@ -65,6 +66,14 @@ int main(int argc, char *argv[])
 		}
 		else{
 	    	strcpy(rec[i].str,buffer);
+	    	printf("sock %d data %s\n", rec[i].fid,rec[i].str);
+	    	char *p;
+	    	p=strtok(buffer," ");
+	    	p=strtok(NULL," ");
+	    	rec[i].S=S+1;
+	    	S++;
+	    	printf("pid %d seq counter %d\n",atoi(p),rec[i].S);
+	    	rec[i].pid=atoi(p);
 		}
        /* new_sock = (int *)malloc(1);
         *new_sock = newsockfd;*/
@@ -75,21 +84,27 @@ int main(int argc, char *argv[])
         i++;
 	}
 	for( i = 0;i < MAXPROCESS; i++){
+		sprintf(rec[i].str,"%s %d",rec[i].str,rec[i].S);	
 		for(j = 0;j<MAXPROCESS; j++){
-			
-				if(write(rec[j].fid, rec[j].str, MAXDATASIZE) < 0){
+			printf("Sockets for sender %d and receivers %d \n",rec[i].fid,rec[j].fid);
+			if(rec[j].fid!=rec[i].fid){	
+				if(write(rec[j].fid, rec[i].str, MAXDATASIZE) < 0){
 					fprintf(stderr, "Error writing to socket\n");
 					exit(0);
 				}
 				else{
-					printf("WE DID IT %s\n",rec[j].str);
+					printf("WE DID IT for %d %s to pid %d\n",rec[i].pid,rec[i].str,rec[j].pid);
 				}	
+			}
+			else
+				continue;
 			
-		}			
+		}
+		//close(rec[i].fid);			
 	}
-	//for(int i = 0; i < 100; i++){
-//		pthread_join(sniffer_thread,NULL);
-//	}
+	for(int i = 0; i < MAXPROCESS; i++){
+		close(rec[i].fid);
+	}
 	close(socketfd);
     return 0;
 }
